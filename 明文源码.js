@@ -40,6 +40,7 @@ const regex = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[.*\]):?(\d+)?#?(.*)?$/;
 let proxyIPPool = [];
 let path = '/?ed=2560';
 let link = [];
+let banHosts = [atob('c3BlZWQuY2xvdWRmbGFyZS5jb20=')];
 export default {
 	async fetch(request, env, ctx) {
 		try {
@@ -81,7 +82,7 @@ export default {
 			socks5Address = socks5Address.split('//')[1] || socks5Address;
 			if (env.GO2SOCKS5) go2Socks5s = await ADD(env.GO2SOCKS5);
 			if (env.CFPORTS) httpsPorts = await ADD(env.CFPORTS);
-
+			if (env.BAN) banHosts = await 整理(env.BAN);
 			if (socks5Address) {
 				try {
 					parsedSocks5Address = socks5AddressParser(socks5Address);
@@ -274,7 +275,12 @@ async function 特洛伊OverWSHandler(request) {
 				throw new Error(message);
 				return;
 			}
-			handleTCPOutBound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, log, addressType);
+			if (!banHosts.includes(addressRemote)) {
+				log(`处理 TCP 出站连接 ${addressRemote}:${portRemote}`);
+				handleTCPOutBound(remoteSocketWapper, addressRemote, portRemote, rawClientData, webSocket, log, addressType);
+			} else {
+				throw new Error(`黑名单关闭 TCP 出站连接 ${addressRemote}:${portRemote}`);
+			}
 		},
 		close() {
 			log(`readableWebSocketStream is closed`);
@@ -657,6 +663,7 @@ function 配置信息(密码, 域名地址) {
 }
 
 let subParams = ['sub','base64','b64','clash','singbox','sb','surge'];
+const cmad = decodeURIComponent(atob(`dGVsZWdyYW0lMjAlRTQlQkElQTQlRTYlQjUlODElRTclQkUlQTQlMjAlRTYlOEElODAlRTYlOUMlQUYlRTUlQTQlQTclRTQlQkQlQUMlN0UlRTUlOUMlQTglRTclQkElQkYlRTUlOEYlOTElRTclODklOEMhJTNDYnIlM0UKJTNDYSUyMGhyZWYlM0QlMjdodHRwcyUzQSUyRiUyRnQubWUlMkZDTUxpdXNzc3MlMjclM0VodHRwcyUzQSUyRiUyRnQubWUlMkZDTUxpdXNzc3MlM0MlMkZhJTNFJTNDYnIlM0UKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tJTNDYnIlM0UKZ2l0aHViJTIwJUU5JUExJUI5JUU3JTlCJUFFJUU1JTlDJUIwJUU1JTlEJTgwJTIwU3RhciFTdGFyIVN0YXIhISElM0NiciUzRQolM0NhJTIwaHJlZiUzRCUyN2h0dHBzJTNBJTJGJTJGZ2l0aHViLmNvbSUyRmNtbGl1JTJGZXBlaXVzJTI3JTNFaHR0cHMlM0ElMkYlMkZnaXRodWIuY29tJTJGY21saXUlMkZlcGVpdXMlM0MlMkZhJTNFJTNDYnIlM0UKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tJTNDYnIlM0UKJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIz`));
 async function get特洛伊Config(password, hostName, sub, UA, RproxyIP, _url, env) {
 	if (sub) {
 		const match = sub.match(/^(?:https?:\/\/)?([^\/]+)/);
@@ -847,7 +854,7 @@ async function get特洛伊Config(password, hostName, sub, UA, RproxyIP, _url, e
 			${clash}<br>
 			---------------------------------------------------------------<br>
 			################################################################<br>
-			${decodeURIComponent(atob(`dGVsZWdyYW0lMjAlRTQlQkElQTQlRTYlQjUlODElRTclQkUlQTQlMjAlRTYlOEElODAlRTYlOUMlQUYlRTUlQTQlQTclRTQlQkQlQUMlN0UlRTUlOUMlQTglRTclQkElQkYlRTUlOEYlOTElRTclODklOEMhJTNDYnIlM0UKJTNDYSUyMGhyZWYlM0QlMjdodHRwcyUzQSUyRiUyRnQubWUlMkZDTUxpdXNzc3MlMjclM0VodHRwcyUzQSUyRiUyRnQubWUlMkZDTUxpdXNzc3MlM0MlMkZhJTNFJTNDYnIlM0UKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tJTNDYnIlM0UKZ2l0aHViJTIwJUU5JUExJUI5JUU3JTlCJUFFJUU1JTlDJUIwJUU1JTlEJTgwJTIwU3RhciFTdGFyIVN0YXIhISElM0NiciUzRQolM0NhJTIwaHJlZiUzRCUyN2h0dHBzJTNBJTJGJTJGZ2l0aHViLmNvbSUyRmNtbGl1JTJGZXBlaXVzJTI3JTNFaHR0cHMlM0ElMkYlMkZnaXRodWIuY29tJTJGY21saXUlMkZlcGVpdXMlM0MlMkZhJTNFJTNDYnIlM0UKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tJTNDYnIlM0UKJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIzJTIz`))}
+			${cmad}
 			`;
 		return 节点配置页;
 	} else {
@@ -1549,13 +1556,13 @@ async function KV(request, env, txt = '/ADD.txt') {
 		<!DOCTYPE html>
 		<html>
 		<head>
-			<title>KV编辑器</title>
+			<title>优选订阅列表</title>
 			<meta charset="utf-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<style>
 				body {
 					margin: 0;
-					padding: 20px;
+					padding: 15px; /* 调整padding */
 					box-sizing: border-box;
 					font-size: 13px; /* 设置全局字体大小 */
 				}
@@ -1566,25 +1573,25 @@ async function KV(request, env, txt = '/ADD.txt') {
 				}
 				.editor {
 					width: 100%;
-					height: 520px;
-					margin: 20px 0;
-					padding: 15px;
+					height: 520px; /* 调整高度 */
+					margin: 15px 0; /* 调整margin */
+					padding: 10px; /* 调整padding */
 					box-sizing: border-box;
 					border: 1px solid #ccc;
 					border-radius: 4px;
-					font-size: 16px;
+					font-size: 13px;
 					line-height: 1.5;
 					overflow-y: auto;
 					resize: none;
 				}
 				.save-container {
-					margin-top: 10px;
+					margin-top: 8px; /* 调整margin */
 					display: flex;
 					align-items: center;
-					gap: 15px;
+					gap: 10px; /* 调整gap */
 				}
 				.save-btn, .back-btn {
-					padding: 8px 20px;
+					padding: 6px 15px; /* 调整padding */
 					color: white;
 					border: none;
 					border-radius: 4px;
@@ -1608,6 +1615,9 @@ async function KV(request, env, txt = '/ADD.txt') {
 			</style>
 		</head>
 		<body>
+			################################################################<br>
+			${FileName} 优选订阅列表:<br>
+			---------------------------------------------------------------<br>
 			<div class="editor-container">
 				${hasKV ? `
 				<textarea class="editor" 
@@ -1618,6 +1628,9 @@ async function KV(request, env, txt = '/ADD.txt') {
 					<button class="save-btn" onclick="saveContent()">保存</button>
 					<span class="save-status" id="saveStatus"></span>
 				</div>
+				<br>
+				################################################################<br>
+				${cmad}
 				` : '<p>未绑定KV空间</p>'}
 			</div>
 
